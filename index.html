@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+        <title>Image Mapper</title>
+        <link rel="stylesheet" href="css/style.css" />
+        <script src="js/vue-library/vue.js"></script>
+        <script src="js/vue-library/axios.min.js"></script>
+        <script src="js/vue-library/tween.min.js"></script>
+
+        <script type="text/javascript" src="js/vue/vue-main.js"></script>
+        <link rel="stylesheet" href="css/vue/vue-main.css">
+
+        <script src="js/vue-library/vue.js"></script>
+        <script src="js/vue-library/axios.min.js"></script>
+        <script src="js/vue-library/tween.min.js"></script>
+
+        <script src="js/vue-library/es6-promise.min.js"></script>
+        <script src="js/vue-library/es6-promise.auto.min.js"></script>
+    </head>
+    <body>
+
+        <div id="importContainer"></div>
+
+        <div id="imageMapper">
+            <div id="exportingContainer">
+                <img v-bind:src="src" v-bind:usemap="'#'+mapName" />
+                <map v-bind:name="mapName">
+                  <area v-for="a in areas" v-bind:shape="a.type" v-bind:coords="translateCoords(a)" v-bind:href="a.href" v-bind:alt="a.alt" />
+                </map>
+            </div>
+            <svg id="stage" v-on:mousedown="onStagePressed" v-on:mousemove="onStageMotion" v-on:mouseup="onStageUp">
+                <rect v-on:mousedown="selectedArea = undefined" class="background-rect" x="0" y="0" width="5000" height="5000"></rect>
+                <g class="map-shapes" v-for="a in areas">
+                    <rect v-on:mousedown="selectedArea = a" v-if="a.type=='rect'" v-bind:x="a.x" v-bind:y="a.y" v-bind:width="a.width" v-bind:height="a.height"></rect>
+                    <circle v-on:mousedown="selectedArea = a" v-if="a.type=='circle'" v-bind:cx="a.x" v-bind:cy="a.y" v-bind:r="a.radius"></circle>
+                    <path v-on:mousedown="selectedArea = a" v-if="a.type=='poly'" v-bind:d="translatePathCoords(a.polyCoords)"></circle>
+                    
+                </g>
+                <g v-if="selectedArea != undefined && selectedArea.type=='rect'">
+                    <circle class="shaping-handle" v-on:mousedown="handleSelected" handle-index="0" v-bind:cx="selectedArea.x" v-bind:cy="selectedArea.y" v-bind:r="reshapeHandleSize"></circle>
+                    <circle class="shaping-handle" v-on:mousedown="handleSelected" handle-index="1" v-bind:cx="Number(selectedArea.x)+Number(selectedArea.width)" v-bind:cy="selectedArea.y" v-bind:r="reshapeHandleSize"></circle>
+                    <circle class="shaping-handle" v-on:mousedown="handleSelected" handle-index="2" v-bind:cx="Number(selectedArea.x)+Number(selectedArea.width)" v-bind:cy="Number(selectedArea.y)+Number(selectedArea.height)" v-bind:r="reshapeHandleSize"></circle>
+                    <circle class="shaping-handle" v-on:mousedown="handleSelected" handle-index="3" v-bind:cx="selectedArea.x" v-bind:cy="Number(selectedArea.y)+Number(selectedArea.height)" v-bind:r="reshapeHandleSize"></circle>    
+                </g>
+                <g v-if="selectedArea != undefined && selectedArea.type=='circle'">
+                    <circle class="shaping-handle" v-on:mousedown="handleSelected" handle-index="0" v-bind:cx="Number(selectedArea.x)" v-bind:cy="Number(selectedArea.y)-Number(selectedArea.radius)" v-bind:r="reshapeHandleSize"></circle>
+                    <circle class="shaping-handle" v-on:mousedown="handleSelected" handle-index="1" v-bind:cx="Number(selectedArea.x)+Number(selectedArea.radius)" v-bind:cy="Number(selectedArea.y)" v-bind:r="reshapeHandleSize"></circle>
+                    <circle class="shaping-handle" v-on:mousedown="handleSelected" handle-index="2" v-bind:cx="Number(selectedArea.x)" v-bind:cy="Number(selectedArea.y)+Number(selectedArea.radius)" v-bind:r="reshapeHandleSize"></circle>
+                    <circle class="shaping-handle" v-on:mousedown="handleSelected" handle-index="3" v-bind:cx="Number(selectedArea.x)-Number(selectedArea.radius)" v-bind:cy="Number(selectedArea.y)" v-bind:r="reshapeHandleSize"></circle> 
+                </g>
+                <g v-if="selectedArea != undefined && selectedArea.type=='poly'">
+                    <circle class="shaping-handle" v-for="(p,i) in selectedArea.polyCoords" v-on:mousedown="handleSelected" v-bind:handle-index="i" v-bind:cx="p.x" v-bind:cy="p.y" v-bind:r="reshapeHandleSize"></circle>
+                </g>
+            </svg>
+            <div class="util-nav"><button v-for="t in tools" v-bind:tool-index="t" v-on:click="onToolClicked">{{t}}</button></li></div>
+            
+            <ul class="area-list">
+                <li>
+                    <input type="text" v-model="src" placeholder="src" />
+                    <input type="text" v-model="mapName" placeholder="name" />
+                </li>
+                <li v-for="(a,i) in areas" v-bind:area-index="i">
+                    <input class="area-name" type="text" v-bind:placeholder="'Area '+(Number(i)+1).toString()" v-model="a.alt" />
+                    <button class="delete-area-button" v-if="areas.length > 1" v-on:click="selectedArea = undefined; areas.splice(i,1);">X</button>
+                    <select v-model="a.type">
+                        <option v-for="t in types" v-bind:value="t">{{t}}</option>
+                    </select>
+                    <input type="text" placeholder="href" placeholder="href" v-model="a.href" />
+                    
+
+                    <span v-if="a.type=='rect'"><label>Left</label><input type="number" v-model="a.x" placeholder="x" /></span>
+                    <span v-if="a.type=='rect'"><label>Top</label><input type="number" v-model="a.y" placeholder="y" /></span>
+                    <span v-if="a.type=='rect'"><label>Width</label><input type="number" v-model="a.width" placeholder="width" /></span>
+                    <span v-if="a.type=='rect'"><label>Height</label><input type="number" v-model="a.height" placeholder="height" /></span>
+
+                    <span v-if="a.type=='circle'"><label>Center(X)</label><input type="number" v-model="a.x" placeholder="x" /></span>
+                    <span v-if="a.type=='circle'"><label>Center(Y)</label><input type="number" v-model="a.y" placeholder="y" /></span>
+                    <span v-if="a.type=='circle'"><label>Radius</label><input type="number" v-model="a.radius" placeholder="radius" /></span>
+
+                    <ul v-if="a.type=='poly'" class="poly-coord-list">
+                        <li v-for="(p,i) in a.polyCoords">
+                            <span><label>X</label><input type="number" v-model="p.x" /></span>
+                            <span><label>Y</label><input type="number" v-model="p.y" /></span>
+                            <button class="delete-point-button" v-if="a.polyCoords.length > 3" v-on:click="a.polyCoords.splice(i,1);">X</button>
+                        </li>
+                        <li><button v-on:click="addPoint(a)">ADD POLY POINT</button></li>
+                    </ul>
+
+                    <input v-if="a.type=='default'" v-model="a.defaltCoords" type="text" placeholder="coords" v-model="a.href" />
+                    
+                    
+                </li>
+                <li><button v-on:click="addArea">ADD AREA</button></li>
+            </ul>
+
+            <div v-if="showExport==true || showImport==true" class="dialogue-blocker"></div>
+
+            <div v-if="showExport==true" class="tool-dialogue">
+                <textarea v-model="exportInfo"></textarea>
+                <div class="dialogue-nav"><button v-on:click="closeDialogue">Cancel</button></div>
+            </div>
+            <div v-if="showImport==true" class="tool-dialogue">
+                <textarea v-model="importInfo"></textarea>
+                <div class="dialogue-nav"><button v-on:click="closeDialogue">Cancel</button><button v-on:click="confirmImport">Confirm</button></div>
+            </div>
+            
+        </div>
+
+        <script src="js/main.js" type="text/javascript"></script>
+    </body>
+</html>
