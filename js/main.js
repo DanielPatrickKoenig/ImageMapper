@@ -1,3 +1,12 @@
+
+/*
+VERSION: 0.1.0
+ImageMapper
+author: Dan Koenig, dpkoenig27@gmail.com
+license Copyright (c) 2017, Dan Koenig
+Free to use under the WTFPL license
+requires vue js
+*/
 (function(){
     function createAreaTemplate(){
         return {type:"default",href:"",alt:"",x:36,y:36,width:72,height:72,radius:36,polyCoords:[{x:0,y:0},{x:72,y:0},{x:0,y:72}],defaltCoords:""};
