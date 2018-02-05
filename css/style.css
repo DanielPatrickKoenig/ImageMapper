@@ -34,13 +34,8 @@ ul.area-list > li{
 
 ul.area-list li > span{
     display: block;
-    margin-bottom:5px/*
-VERSION: 0.1.0
-ImageMapper
-author: Dan Koenig, dpkoenig27@gmail.com
-license Copyright (c) 2017, Dan Koenig
-Free to use under the WTFPL license
-*/
+    margin-bottom:5px;
+}
 ul.tools-menu{
     position: fixed;
     top: 0;
@@ -76,6 +71,8 @@ ul.area-list li > span{
 
 ul.area-list > li > span{
     border-top:1px dotted #ffffff;
+    padding-top: 2px;
+    padding-bottom:2px;
 }
 
 ul.area-list li > span > label{

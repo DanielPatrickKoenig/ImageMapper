@@ -205,7 +205,7 @@ requires vue js
                 pointString = "";
                 switch(a.type){
                     case "rect":{
-                        pointString = a.x.toString()+","+a.y.toString()+","+(a.width+a.x).toString()+","+(a.height+a.y).toString();
+                        pointString = a.x.toString()+","+a.y.toString()+","+(Number(a.width)+Number(a.x)).toString()+","+(Number(a.height)+Number(a.y)).toString();
                         break;
                     }
                     case "circle":{
